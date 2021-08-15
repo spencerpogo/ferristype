@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Type Racer Clone</title>
 	<script>
+		// Notify message in top left
 		function notify(message) {
 			let notification = document.createElement("li");
 			notification.innerText = message;
@@ -16,26 +17,29 @@
 			}, 5000);
 		}
 
+		// Test notification
 		window.onload = function() {
 			notify("Bob has left");
 		}
 
+		// When the user presses a key
 		window.onkeypress = function(e){
 			let incomplete = document.getElementById("incomplete").innerText;
 			let wrong = document.getElementById("wrong").innerText;
 
-			if (e.key == incomplete[0] || e.key == wrong) {
-				if (wrong != "") {
-					document.getElementById("completed").innerText += wrong;
-				} else {
-
-				}
-
+			if (wrong == "" && e.key == incomplete[0]) {
+				// If the user types a correct letter
 				document.getElementById("incomplete").innerText = document.getElementById("incomplete").innerText.substr(1);
 				document.getElementById("completed").innerText += e.key;
 				document.getElementById("wrong").innerText = "";
-			} else {
-
+			} else if (wrong != "" && e.key == wrong) {
+				// If the user fixes their input for a letter
+				document.getElementById("completed").innerText += e.key;
+				document.getElementById("wrong").innerText = "";
+			} else if (wrong == "" && e.key != incomplete[0]) {
+				// If the user types a wrong letter
+				document.getElementById("wrong").innerText = incomplete[0];
+				document.getElementById("incomplete").innerText = document.getElementById("incomplete").innerText.substr(1);
 			}
 		}
 
@@ -45,11 +49,24 @@
 			console.log("[open] Connection established");
 			console.log("Sending to server");
 
+			// When the user presses a key
 			window.onkeypress = function(e){
-				if (e.key == document.getElementById("incomplete").innerText[0]) {
+				let incomplete = document.getElementById("incomplete").innerText;
+				let wrong = document.getElementById("wrong").innerText;
+
+				if (wrong == "" && e.key == incomplete[0]) {
+					// If the user types a correct letter
 					document.getElementById("incomplete").innerText = document.getElementById("incomplete").innerText.substr(1);
 					document.getElementById("completed").innerText += e.key;
 					document.getElementById("wrong").innerText = "";
+				} else if (wrong != "" && e.key == wrong) {
+					// If the user fixes their input for a letter
+					document.getElementById("completed").innerText += e.key;
+					document.getElementById("wrong").innerText = "";
+				} else if (wrong == "" && e.key != incomplete[0]) {
+					// If the user types a wrong letter
+					document.getElementById("wrong").innerText = incomplete[0];
+					document.getElementById("incomplete").innerText = document.getElementById("incomplete").innerText.substr(1);
 				}
 
 				let msg = {
