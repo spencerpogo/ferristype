@@ -1,17 +1,34 @@
+use futures::stream::StreamExt;
 use nanoid::nanoid;
 use serde::Serialize;
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
-use tokio::sync::RwLock;
-use warp::{Filter, Rejection, Reply};
+use tokio::sync::{
+    mpsc::{self, UnboundedSender},
+    RwLock,
+};
+use warp::{
+    ws::{Message, WebSocket},
+    Filter, Rejection, Reply,
+};
 
 type Wesult<T> = std::result::Result<T, Rejection>;
 
 #[derive(Clone)]
-pub struct Room {}
+struct Client {
+    pos: usize,
+    sender: UnboundedSender<Result<Message, warp::Error>>,
+}
+
+#[derive(Clone)]
+pub struct Room {
+    clients: Vec<Client>,
+}
 
 impl Room {
     fn new() -> Self {
-        Self {}
+        Self {
+            clients: Vec::new(),
+        }
     }
 }
 
@@ -45,16 +62,27 @@ async fn create_room(game: Game) -> Wesult<warp::reply::Json> {
     Ok(warp::reply::json(&CreateRoomResponse { id }))
 }
 
-async fn client_connection(ws: warp::ws::WebSocket, id: String, game: Game, mut room: Room) {
+async fn client_connection(ws: WebSocket, id: String, game: Game) {
     println!("Client connected to room {}", id);
+    let (client_ws_sender, mut client_ws_rcv) = ws.split();
+    let (client_sender, client_rcv) = mpsc::unbounded_channel::<Result<Message, warp::Error>>();
+    let client = Client {
+        pos: 0,
+        sender: client_sender,
+    };
+    game.write()
+        .await
+        .rooms
+        .get_mut(&id)
+        .expect("Expected room to exist")
+        .clients
+        .push(client);
 }
 
 async fn room_join_handler(room_id: String, ws: warp::ws::Ws, game: Game) -> Wesult<impl Reply> {
     let r = game.read().await.rooms.get(&room_id).cloned();
     match r {
-        Some(room) => {
-            Ok(ws.on_upgrade(move |socket| client_connection(socket, room_id, game, room)))
-        }
+        Some(_) => Ok(ws.on_upgrade(move |socket| client_connection(socket, room_id, game))),
         None => Err(warp::reject::not_found()),
     }
 }
