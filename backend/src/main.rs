@@ -1,7 +1,7 @@
+use nanoid::nanoid;
 use serde::Serialize;
 use std::{collections::HashMap, convert::Infallible, sync::Arc};
 use tokio::sync::RwLock;
-use uuid::Uuid;
 use warp::Filter;
 
 pub struct Room {}
@@ -13,7 +13,7 @@ impl Room {
 }
 
 pub struct GameData {
-    rooms: HashMap<Uuid, Room>,
+    rooms: HashMap<String, Room>,
 }
 
 impl GameData {
@@ -32,12 +32,12 @@ fn with_game(game: Game) -> impl Filter<Extract = (Game,), Error = Infallible> +
 
 #[derive(Serialize)]
 struct CreateRoomResponse {
-    id: Uuid,
+    id: String,
 }
 
 async fn create_room(game: Game) -> Result<warp::reply::Json, Infallible> {
-    let id = Uuid::new_v4();
-    game.write().await.rooms.insert(id, Room::new());
+    let id = nanoid!();
+    game.write().await.rooms.insert(id.clone(), Room::new());
     Ok(warp::reply::json(&CreateRoomResponse { id }))
 }
 
