@@ -5,17 +5,111 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Type Racer Clone</title>
+	<script>
+		function notify(message) {
+			let notification = document.createElement("li");
+			notification.innerText = message;
+			document.getElementById("notifications").appendChild(notification);
+
+			setTimeout(() => {
+				document.getElementById("notifications").removeChild(notification);
+			}, 5000);
+		}
+
+		window.onload = function() {
+			notify("Bob has left");
+		}
+
+		window.onkeypress = function(e){
+			let incomplete = document.getElementById("incomplete").innerText;
+			let wrong = document.getElementById("wrong").innerText;
+
+			if (e.key == incomplete[0] || e.key == wrong) {
+				if (wrong != "") {
+					document.getElementById("completed").innerText += wrong;
+				} else {
+
+				}
+
+				document.getElementById("incomplete").innerText = document.getElementById("incomplete").innerText.substr(1);
+				document.getElementById("completed").innerText += e.key;
+				document.getElementById("wrong").innerText = "";
+			} else {
+
+			}
+		}
+
+		let socket = new WebSocket("wss://url.for/websocket");
+
+		socket.onopen = function(e) {
+			console.log("[open] Connection established");
+			console.log("Sending to server");
+
+			window.onkeypress = function(e){
+				if (e.key == document.getElementById("incomplete").innerText[0]) {
+					document.getElementById("incomplete").innerText = document.getElementById("incomplete").innerText.substr(1);
+					document.getElementById("completed").innerText += e.key;
+					document.getElementById("wrong").innerText = "";
+				}
+
+				let msg = {
+					token: "",
+					letter: e.key
+				};
+				socket.send(JSON.stringify(msg));
+			};
+
+			socket.send({"token": "", "message": "connected"});
+		};
+
+		socket.onmessage = function(event) {
+			var msg = JSON.parse(event.data);
+			switch (msg.type) {
+				case "prompt":
+					document.getElementById("completed").innerText = "";
+					document.getElementById("wrong").innerText = "";
+					document.getElementById("incomplete").innerText = msg.text;
+					break;
+				case "joined":
+					notify(msg.text + " has joined");
+					break;
+				case "left":
+					notify(msg.text + " has left");
+					break;
+				case "starting":
+					notify("Starting in..." + msg.text);
+					break;
+				case "started":
+					notify("Begin!");
+					break;
+			}
+		};
+
+		// socket.onclose = function(event) {
+		// 	if (event.wasClean) {
+		// 		console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+		// 	} else {
+		// 		// e.g. server process killed or network down
+		// 		// event.code is usually 1006 in this case
+		// 		console.log('[close] Connection died');
+		// 	}
+		// };
+
+		// socket.onerror = function(error) {
+		// 	console.error(`[error] ${error.message}`);
+		// };
+	</script>
 	<style>
 		body {
-			background: black;
+			background: #222;
 			color: white;
 		}
 
-		.completed {
+		#completed {
 			color: lime;
 		}
 
-		.wrong {
+		#wrong {
 			color: red;
 		}
 
@@ -25,13 +119,21 @@
 			left: 50%;
 			transform: translate(-50%, -50%);
 
-			background: #222;
+			background: #333;
 			border-radius: 5px;
 			padding: 20px;
 		}
 	</style>
 </head>
 <body>
-	<main><span class="completed">Lorem ipsum, dolor sit amet</span> <span class="wrong">c</span>onsectetur adipisicing elit. Nam qui officiis ea soluta ipsam minus mollitia sunt, explicabo distinctio facilis? Ut repellendus quam assumenda! Vitae harum deserunt voluptas doloribus? Beatae.</main>
+
+	<ul id="notifications">
+		<li>John has joined</li>
+	</ul>
+
+	<main>
+		<span id="completed"></span><span id="wrong"></span><span id="incomplete">Lorem ipsum, dolor sit ametonsectetur adipisicing elit. Nam qui officiis ea soluta ipsam minus mollitia sunt, explicabo distinctio facilis? Ut repellendus quam assumenda! Vitae harum deserunt voluptas doloribus? Beatae.</span>
+	</main>
+
 </body>
 </html>
