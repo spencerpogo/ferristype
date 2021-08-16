@@ -6,6 +6,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Type Racer Clone</title>
 	<script>
+		var timer;
+
 		// Notify message in top left
 		function notify(message) {
 			let notification = document.createElement("li");
@@ -17,29 +19,60 @@
 			}, 5000);
 		}
 
+		// Begin timer counting up
+		function start_timer() {
+			let totalSeconds = 0;
+			timer = setInterval(function() {
+				++totalSeconds;
+				document.getElementById("time").innerText = pad(parseInt(totalSeconds / 60)) + ":" + pad(totalSeconds % 60);
+			}, 1000);
+
+			function pad(val) {
+				let valString = val + "";
+				if (valString.length < 2) {
+					return "0" + valString;
+				} else {
+					return valString;
+				}
+			}
+		}
+
+		function stop_timer() {
+			clearInterval(timer);
+			return document.getElementById("time").innerText;
+		}
+
 		// Test notification
 		window.onload = function() {
 			notify("Bob has left");
+
+			start_timer();
 		}
 
 		// When the user presses a key
 		window.onkeypress = function(e){
-			let incomplete = document.getElementById("incomplete").innerText;
-			let wrong = document.getElementById("wrong").innerText;
+			let incomplete = document.getElementById("incomplete");
+			let completed = document.getElementById("completed");
+			let wrong = document.getElementById("wrong");
 
-			if (wrong == "" && e.key == incomplete[0]) {
+			if (wrong.innerText == "" && e.key == incomplete.innerText[0]) {
 				// If the user types a correct letter
-				document.getElementById("incomplete").innerText = document.getElementById("incomplete").innerText.substr(1);
-				document.getElementById("completed").innerText += e.key;
-				document.getElementById("wrong").innerText = "";
-			} else if (wrong != "" && e.key == wrong) {
+				incomplete.innerText = incomplete.innerText.substr(1);
+				completed.innerText += e.key;
+				wrong.innerText = "";
+			} else if (wrong.innerText != "" && e.key == wrong.innerText) {
 				// If the user fixes their input for a letter
-				document.getElementById("completed").innerText += e.key;
-				document.getElementById("wrong").innerText = "";
-			} else if (wrong == "" && e.key != incomplete[0]) {
+				completed.innerText += e.key;
+				wrong.innerText = "";
+			} else if (wrong.innerText == "" && e.key != incomplete.innerText[0]) {
 				// If the user types a wrong letter
-				document.getElementById("wrong").innerText = incomplete[0];
-				document.getElementById("incomplete").innerText = document.getElementById("incomplete").innerText.substr(1);
+				wrong.innerText = incomplete.innerText[0];
+				incomplete.innerText = incomplete.innerText.substr(1);
+			}
+
+			if (incomplete.innerText == "") {
+				notify("You have won!");
+				document.getElementById("time").innerText = "Finished in " + stop_timer();
 			}
 		}
 
@@ -123,11 +156,18 @@
 		}
 
 		#completed {
-			color: lime;
+			color: #72ff3f;
 		}
 
 		#wrong {
-			color: red;
+			color: #ff3b3b;
+		}
+
+		#time {
+			position: absolute;
+			left: 50%;
+			top: 25%;
+			transform: translate(-50%, -50%);
 		}
 
 		main {
@@ -139,6 +179,8 @@
 			background: #333;
 			border-radius: 5px;
 			padding: 20px;
+
+			box-shadow: 0 1px 3px rgba(0,0,0,0.5);
 		}
 	</style>
 </head>
@@ -148,8 +190,10 @@
 		<li>John has joined</li>
 	</ul>
 
+	<h1 id="time">Waiting...</h1>
+
 	<main>
-		<span id="completed"></span><span id="wrong"></span><span id="incomplete">Lorem ipsum, dolor sit ametonsectetur adipisicing elit. Nam qui officiis ea soluta ipsam minus mollitia sunt, explicabo distinctio facilis? Ut repellendus quam assumenda! Vitae harum deserunt voluptas doloribus? Beatae.</span>
+		<span id="completed"></span><span id="wrong"></span><span id="incomplete">Lorem ipsum, dolor sit ametonsectetur adipisicing elit.</span>
 	</main>
 
 </body>
